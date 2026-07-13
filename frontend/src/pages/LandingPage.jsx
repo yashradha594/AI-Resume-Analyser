@@ -209,7 +209,7 @@ const LandingPage = () => {
         borderTop: '1px solid var(--border)',
         color: 'var(--text-muted)', fontSize: 13
       }}>
-        Built with ❤️ using React + Gemini AI · AI Resume Analyzer © 2024
+        Built using React + Gemini AI · AI Resume Analyzer © 2026
       </footer>
     </div>
   );
