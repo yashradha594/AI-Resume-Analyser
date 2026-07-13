@@ -71,18 +71,17 @@ app.use((err, req, res, next) => {
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log(`✅ MongoDB connected: ${mongoose.connection.name}`);
+    console.log(` MongoDB connected: ${mongoose.connection.name}`);
   } catch (error) {
-    console.error("❌ MongoDB connection failed:", error.message);
+    console.error(" MongoDB connection failed:", error.message);
     process.exit(1);
   }
 };
 
 connectDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Database: AI-res-analyzer`);
-    console.log(`🌍 Client URL: ${process.env.CLIENT_URL}`);
+    console.log(` Server running on http://localhost:${PORT}`);
+    console.log(` Client URL: ${process.env.CLIENT_URL}`);
   });
 });
 
