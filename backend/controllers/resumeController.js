@@ -1,5 +1,4 @@
-const fs = require("fs");
-const path = require("path");
+
 const pdfParse = require("pdf-parse");
 const Resume = require("../models/Resume");
 const User = require("../models/User");
@@ -13,7 +12,6 @@ const { sendAnalysisEmail } = require("../utils/mailer");
  */
 const uploadResume = async (req, res) => {
   try {
-    // Check file uploaded
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -24,119 +22,74 @@ const uploadResume = async (req, res) => {
     const { email: emailAddress } = req.body;
     const userId = req.user._id;
 
-    // Get user to fetch role
     const user = await User.findById(userId);
-    const role = user.role === "Custom" && user.customRole ? user.customRole : user.role;
 
-    // Parse PDF
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const role =
+      user.role === "Custom" && user.customRole
+        ? user.customRole
+        : user.role;
+
     let resumeText = "";
+
     try {
-      const dataBuffer = fs.readFileSync(req.file.path);
-      const pdfData = await pdfParse(dataBuffer);
+      const pdfData = await pdfParse(req.file.buffer);
       resumeText = pdfData.text;
     } catch (pdfError) {
-      console.error("PDF Parse Error:", pdfError.message);
-      // Cleanup uploaded file
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({
         success: false,
-        message: "Could not parse the PDF. Please ensure it is a valid, text-based PDF.",
+        message: "Invalid PDF file",
       });
     }
 
     if (!resumeText || resumeText.trim().length < 50) {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({
         success: false,
-        message: "PDF appears to be empty or contains only images. Please use a text-based PDF.",
+        message: "PDF is empty or image-based",
       });
     }
 
-    // Call Gemini AI for analysis
     const analysisResult = await analyzeResume(resumeText, role);
 
     if (!analysisResult.success) {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(503).json({
         success: false,
-        message: "AI analysis failed. Please check your Gemini API key or try again later.",
-        error: analysisResult.error,
+        message: "AI analysis failed",
       });
     }
 
-    const {
-      score,
-      strengths,
-      suggestions,
-      missingSkills,
-      projectFeedback,
-      atsTips,
-      professionalSummary,
-    } = analysisResult.data;
-
-    // Save to MongoDB
-    const resume = await Resume.create({
+    const newResume = await Resume.create({
       userId,
+      email: emailAddress,
       role,
-      fileName: req.file.originalname,
-      resumeText: resumeText.substring(0, 10000), // Limit stored text
-      score,
-      strengths,
-      suggestions,
-      missingSkills,
-      projectFeedback,
-      atsTips,
-      professionalSummary,
-      emailAddress: emailAddress || "",
-      emailSent: false,
+      resumeText,
+      analysis: analysisResult.data,
     });
 
-    // Send email report if email provided
-    let emailResult = { success: false };
     if (emailAddress) {
-      emailResult = await sendAnalysisEmail(
-        emailAddress,
-        user.name,
-        role,
-        analysisResult.data,
-        req.file.originalname
-      );
-
-      if (emailResult.success) {
-        await Resume.findByIdAndUpdate(resume._id, { emailSent: true });
-      }
+      await sendAnalysisEmail(emailAddress, analysisResult.data);
     }
 
-    // Cleanup uploaded file
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      message: "Resume analyzed successfully!",
-      data: {
-        _id: resume._id,
-        role,
-        fileName: req.file.originalname,
-        score,
-        strengths,
-        suggestions,
-        missingSkills,
-        projectFeedback,
-        atsTips,
-        professionalSummary,
-        emailSent: emailResult.success,
-        createdAt: resume.createdAt,
-      },
+      data: newResume,
     });
   } catch (error) {
     console.error("Upload Resume Error:", error.message);
-    // Cleanup on error
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    res.status(500).json({ success: false, message: "Server error during analysis" });
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+//changes till here is made 
 
 /**
  * @desc  Get user's resume history
