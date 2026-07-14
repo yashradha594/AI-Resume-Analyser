@@ -1,7 +1,8 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 /**
  * Build a role-specific prompt for resume analysis
  */
@@ -122,92 +123,28 @@ Rules:
  */
 const analyzeResume = async (resumeText, role) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" }); // ✅ safer model
-
     const prompt = buildAnalysisPrompt(resumeText, role);
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    const interaction = await ai.interactions.create({
+      model: "gemini-3.5-flash",
+      input: prompt,
+    });
 
-    // ==============================
-    // 🧹 CLEAN RESPONSE
-    // ==============================
-    text = text
-      .replace(/```json/gi, "")
-      .replace(/```/gi, "")
-      .trim();
+    let text = interaction.output_text;
 
-    // ==============================
-    // 🧠 EXTRACT JSON SAFELY
-    // ==============================
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-
-    if (!jsonMatch) {
-      throw new Error("No valid JSON found in AI response");
-    }
-
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (err) {
-      throw new Error("Invalid JSON format from AI");
-    }
-
-    // ==============================
-    // ✅ FORCE SAFE STRUCTURE
-    // ==============================
-    const safeData = {
-      score:
-        typeof parsed.score === "number"
-          ? parsed.score
-          : Number(parsed.score) || 0,
-
-      strengths: Array.isArray(parsed.strengths)
-        ? parsed.strengths
-        : [],
-
-      suggestions: Array.isArray(parsed.suggestions)
-        ? parsed.suggestions
-        : [],
-
-      missingSkills: Array.isArray(parsed.missingSkills)
-        ? parsed.missingSkills
-        : [],
-
-      atsTips: Array.isArray(parsed.atsTips)
-        ? parsed.atsTips
-        : [],
-
-      projectFeedback:
-        typeof parsed.projectFeedback === "string"
-          ? parsed.projectFeedback
-          : "",
-
-      professionalSummary:
-        typeof parsed.professionalSummary === "string"
-          ? parsed.professionalSummary
-          : "",
-    };
-
-    // ==============================
-    // 🚨 FINAL VALIDATION
-    // ==============================
-    if (typeof safeData.score !== "number") {
-      throw new Error("Score missing in AI response");
-    }
+    // clean + parse (keep your existing logic if you want)
+    const parsed = JSON.parse(text);
 
     return {
       success: true,
-      data: safeData,
+      data: parsed,
     };
-
   } catch (error) {
     console.error("❌ Gemini Analysis Error FULL:", error);
 
     return {
       success: false,
-      error: error.message || "AI analysis failed",
+      error: error.message,
     };
   }
 };
@@ -217,22 +154,24 @@ const analyzeResume = async (resumeText, role) => {
  */
 const matchJobDescription = async (resumeText, jobDescription, role) => {
   try {
-    const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-pro"
-});
     const prompt = buildJobMatchPrompt(resumeText, jobDescription, role);
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    const interaction = await ai.interactions.create({
+      model: "gemini-3.5-flash",
+      input: prompt,
+    });
 
-    // Clean up response
-    text = text.replace(/```json\n?/gi, "").replace(/```\n?/gi, "").trim();
+    let text = interaction.output_text;
+
+    // Optional cleanup (safe)
+    text = text.replace(/```json/gi, "").replace(/```/gi, "").trim();
 
     const parsed = JSON.parse(text);
+
     return { success: true, data: parsed };
   } catch (error) {
-    console.error("Gemini Job Match Error:", error.message);
+    console.error("❌ Gemini Job Match Error:", error);
+
     return {
       success: false,
       error: error.message || "Job match analysis failed",
