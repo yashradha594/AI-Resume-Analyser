@@ -55,31 +55,55 @@ const uploadResume = async (req, res) => {
       });
     }
 
-    const analysisResult = await analyzeResume(resumeText, role);
+const analysisResult = await analyzeResume(resumeText, role);
 
-    if (!analysisResult.success) {
-      return res.status(503).json({
-        success: false,
-        message: "AI analysis failed",
-      });
-    }
+if (!analysisResult.success) {
+  return res.status(503).json({
+    success: false,
+    message: "AI analysis failed",
+  });
+}
 
-    const newResume = await Resume.create({
-      userId,
-      email: emailAddress,
+// ✅ Get clean data
+const analysisData = analysisResult.data;
+
+// ✅ Validate
+if (!analysisData || typeof analysisData.score !== "number") {
+  return res.status(500).json({
+    success: false,
+    message: "Invalid AI response",
+  });
+}
+
+// ✅ Save to DB
+const newResume = await Resume.create({
+  userId,
+  email: emailAddress,
+  role,
+  resumeText,
+  analysis: analysisData,
+});
+
+// ✅ FIXED EMAIL CALL
+if (emailAddress) {
+  try {
+    await sendAnalysisEmail(
+      emailAddress,
+      user.name,
       role,
-      resumeText,
-      analysis: analysisResult.data,
-    });
+      analysisData,
+      req.file.originalname
+    );
+  } catch (err) {
+    console.error("Email Error:", err.message);
+  }
+}
 
-    if (emailAddress) {
-      await sendAnalysisEmail(emailAddress, analysisResult.data);
-    }
-
-    res.status(201).json({
-      success: true,
-      data: newResume,
-    });
+// ✅ Response
+res.status(201).json({
+  success: true,
+  data: newResume,
+});
   } catch (error) {
     console.error("Upload Resume Error:", error.message);
 

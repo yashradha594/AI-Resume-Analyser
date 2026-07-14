@@ -122,20 +122,89 @@ Rules:
  */
 const analyzeResume = async (resumeText, role) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // ✅ safer model
+
     const prompt = buildAnalysisPrompt(resumeText, role);
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     let text = response.text();
 
-    // Clean up response - remove markdown code blocks if present
-    text = text.replace(/```json\n?/gi, "").replace(/```\n?/gi, "").trim();
+    // ==============================
+    // 🧹 CLEAN RESPONSE
+    // ==============================
+    text = text
+      .replace(/```json/gi, "")
+      .replace(/```/gi, "")
+      .trim();
 
-    const parsed = JSON.parse(text);
-    return { success: true, data: parsed };
+    // ==============================
+    // 🧠 EXTRACT JSON SAFELY
+    // ==============================
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
+      throw new Error("No valid JSON found in AI response");
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (err) {
+      throw new Error("Invalid JSON format from AI");
+    }
+
+    // ==============================
+    // ✅ FORCE SAFE STRUCTURE
+    // ==============================
+    const safeData = {
+      score:
+        typeof parsed.score === "number"
+          ? parsed.score
+          : Number(parsed.score) || 0,
+
+      strengths: Array.isArray(parsed.strengths)
+        ? parsed.strengths
+        : [],
+
+      suggestions: Array.isArray(parsed.suggestions)
+        ? parsed.suggestions
+        : [],
+
+      missingSkills: Array.isArray(parsed.missingSkills)
+        ? parsed.missingSkills
+        : [],
+
+      atsTips: Array.isArray(parsed.atsTips)
+        ? parsed.atsTips
+        : [],
+
+      projectFeedback:
+        typeof parsed.projectFeedback === "string"
+          ? parsed.projectFeedback
+          : "",
+
+      professionalSummary:
+        typeof parsed.professionalSummary === "string"
+          ? parsed.professionalSummary
+          : "",
+    };
+
+    // ==============================
+    // 🚨 FINAL VALIDATION
+    // ==============================
+    if (typeof safeData.score !== "number") {
+      throw new Error("Score missing in AI response");
+    }
+
+    return {
+      success: true,
+      data: safeData,
+    };
+
   } catch (error) {
-    console.error("Gemini Analysis Error:", error.message);
+    console.error("❌ Gemini Analysis Error FULL:", error);
+
     return {
       success: false,
       error: error.message || "AI analysis failed",
