@@ -122,7 +122,7 @@ Rules:
  */
 const analyzeResume = async (resumeText, role) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // ✅ safer model
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" }); // ✅ safer model
 
     const prompt = buildAnalysisPrompt(resumeText, role);
 
