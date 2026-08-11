@@ -25,6 +25,9 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     if (data.success) {
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
       setUser(data.user);
       return data;
     }
@@ -34,6 +37,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     const { data } = await api.post('/auth/register', formData);
     if (data.success) {
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
       setUser(data.user);
       return data;
     }
@@ -44,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await api.post('/auth/logout');
     } catch {}
+    localStorage.removeItem('token');
     setUser(null);
   };
 
