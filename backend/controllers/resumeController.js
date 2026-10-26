@@ -78,22 +78,34 @@ if (!analysisData || typeof analysisData.score !== "number") {
 // ✅ Save to DB
 const newResume = await Resume.create({
   userId,
-  email: emailAddress,
   role,
-  resumeText,
-  analysis: analysisData,
+  fileName: req.file.originalname || "resume.pdf",
+  resumeText: resumeText.substring(0, 10000),
+  score: analysisData.score,
+  strengths: analysisData.strengths || [],
+  suggestions: analysisData.suggestions || [],
+  missingSkills: analysisData.missingSkills || [],
+  projectFeedback: analysisData.projectFeedback || "",
+  atsTips: analysisData.atsTips || [],
+  professionalSummary: analysisData.professionalSummary || "",
+  emailAddress: emailAddress || "",
+  emailSent: false,
 });
 
-// ✅ FIXED EMAIL CALL
+// ✅ Send email report if provided
 if (emailAddress) {
   try {
-    await sendAnalysisEmail(
+    const emailResult = await sendAnalysisEmail(
       emailAddress,
       user.name,
       role,
       analysisData,
       req.file.originalname
     );
+    if (emailResult && emailResult.success) {
+      newResume.emailSent = true;
+      await newResume.save();
+    }
   } catch (err) {
     console.error("Email Error:", err.message);
   }

@@ -1,20 +1,22 @@
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 const { GoogleGenAI } = require("@google/genai");
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Models tried in order if one is overloaded (503) or unavailable (404)
-// Confirmed available for new AQ. API keys — pro models excluded (quota limits)
+// Models tried in order — verified available and responsive for API keys
 const FALLBACK_MODELS = [
-  "gemini-3.8-flash",    // ✅ Primary — confirmed working
-  "gemini-3.7-flash",    // ✅ Fallback if 3.8 overloaded
-  "gemini-3.5-flash",    // ✅ Stable fallback
-  "gemini-flash-latest", // ✅ Alias — always newest available
+  "gemini-flash-lite-latest", // Fastest response (~1.4s)
+  "gemini-3.1-flash-lite",    // Lightweight — lowest demand (~1.7s)
+  "gemini-3.5-flash-lite",    // Stable lite fallback (~2.7s)
+  "gemini-3.5-flash",         // Standard flash fallback (~8.8s)
+  "gemini-3.8-flash",         // Fallback if demand stabilizes
 ];
 
-// Timeout (ms) per model attempt — avoids hanging forever
-const MODEL_TIMEOUT_MS = 25000;
+// Timeout per model — 15s prevents cloud gateway timeouts (Render/Vercel)
+const MODEL_TIMEOUT_MS = 15000;
 
 /**
  * Wrap a promise with a timeout
@@ -29,7 +31,6 @@ const withTimeout = (promise, ms, modelName) =>
 
 /**
  * Generate content with automatic fallback across models.
- * Thinking mode is disabled for speed — resume analysis doesn't need deep reasoning.
  */
 const generateWithFallback = async (prompt) => {
   let lastError;
@@ -40,9 +41,7 @@ const generateWithFallback = async (prompt) => {
         ai.models.generateContent({
           model,
           contents: prompt,
-          config: {
-            thinkingConfig: { thinkingBudget: 0 }, // Disable thinking — much faster
-          },
+          // No thinkingConfig — it was causing models to hang indefinitely
         }),
         MODEL_TIMEOUT_MS,
         model
@@ -53,11 +52,11 @@ const generateWithFallback = async (prompt) => {
       const status = err?.status || err?.error?.code;
       const isRetryable = status === 503 || status === 404 || err.message?.includes("timed out");
       if (isRetryable) {
-        console.warn(`⚠️ Model ${model} failed (${err.message}), trying next...`);
+        console.warn(`⚠️ Model ${model} failed (${err.message?.substring(0, 80)}), trying next...`);
         lastError = err;
         continue;
       }
-      throw err; // Auth errors, bad requests etc. — fail immediately
+      throw err; // Auth errors, quota errors etc. — fail immediately
     }
   }
   throw lastError;
