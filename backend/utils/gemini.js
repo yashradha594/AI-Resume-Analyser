@@ -7,27 +7,51 @@ const ai = new GoogleGenAI({
 // Models tried in order if one is overloaded or unavailable
 const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-2.5-pro", "gemini-2.5-flash"];
 
+// Timeout (ms) per model attempt — avoids hanging forever
+const MODEL_TIMEOUT_MS = 25000;
+
 /**
- * Generate content with automatic fallback across models
+ * Wrap a promise with a timeout
+ */
+const withTimeout = (promise, ms, modelName) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Model ${modelName} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+
+/**
+ * Generate content with automatic fallback across models.
+ * Thinking mode is disabled for speed — resume analysis doesn't need deep reasoning.
  */
 const generateWithFallback = async (prompt) => {
   let lastError;
   for (const model of FALLBACK_MODELS) {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-      });
+      console.log(`🤖 Trying model: ${model}`);
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            thinkingConfig: { thinkingBudget: 0 }, // Disable thinking — much faster
+          },
+        }),
+        MODEL_TIMEOUT_MS,
+        model
+      );
+      console.log(`✅ Success with model: ${model}`);
       return response.text;
     } catch (err) {
       const status = err?.status || err?.error?.code;
-      // Only fall through on overload (503) or not-found (404) errors
-      if (status === 503 || status === 404) {
-        console.warn(`⚠️ Model ${model} unavailable (${status}), trying next...`);
+      const isRetryable = status === 503 || status === 404 || err.message?.includes("timed out");
+      if (isRetryable) {
+        console.warn(`⚠️ Model ${model} failed (${err.message}), trying next...`);
         lastError = err;
         continue;
       }
-      throw err; // For other errors (auth, bad request etc.) fail immediately
+      throw err; // Auth errors, bad requests etc. — fail immediately
     }
   }
   throw lastError;

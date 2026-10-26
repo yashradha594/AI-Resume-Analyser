@@ -83,6 +83,21 @@ connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(` Server running on http://localhost:${PORT}`);
     console.log(` Client URL: ${process.env.CLIENT_URL}`);
+
+    // ── Keep-alive ping (Render free tier spins down after 15min inactivity) ──
+    if (process.env.NODE_ENV !== "development") {
+      const SELF_URL = process.env.RENDER_EXTERNAL_URL || process.env.CLIENT_URL?.replace("vercel.app", "onrender.com");
+      if (SELF_URL) {
+        setInterval(async () => {
+          try {
+            await fetch(`https://ai-resume-analyser-lkoe.onrender.com/api/health`);
+            console.log("🏓 Keep-alive ping sent");
+          } catch (e) {
+            console.warn("Keep-alive ping failed:", e.message);
+          }
+        }, 14 * 60 * 1000); // every 14 minutes
+      }
+    }
   });
 });
 
