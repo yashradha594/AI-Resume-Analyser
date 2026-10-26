@@ -4,6 +4,35 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+// Models tried in order if one is overloaded or unavailable
+const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-2.5-pro", "gemini-2.5-flash"];
+
+/**
+ * Generate content with automatic fallback across models
+ */
+const generateWithFallback = async (prompt) => {
+  let lastError;
+  for (const model of FALLBACK_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+      });
+      return response.text;
+    } catch (err) {
+      const status = err?.status || err?.error?.code;
+      // Only fall through on overload (503) or not-found (404) errors
+      if (status === 503 || status === 404) {
+        console.warn(`⚠️ Model ${model} unavailable (${status}), trying next...`);
+        lastError = err;
+        continue;
+      }
+      throw err; // For other errors (auth, bad request etc.) fail immediately
+    }
+  }
+  throw lastError;
+};
+
 /**
  * Build a role-specific prompt for resume analysis
  */
@@ -126,12 +155,7 @@ const analyzeResume = async (resumeText, role) => {
   try {
     const prompt = buildAnalysisPrompt(resumeText, role);
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-    });
-
-    let text = response.text;
+    let text = await generateWithFallback(prompt);
 
     // Clean up any accidental markdown wrapping
     text = text.replace(/```json/gi, "").replace(/```/gi, "").trim();
@@ -159,12 +183,7 @@ const matchJobDescription = async (resumeText, jobDescription, role) => {
   try {
     const prompt = buildJobMatchPrompt(resumeText, jobDescription, role);
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: prompt,
-    });
-
-    let text = response.text;
+    let text = await generateWithFallback(prompt);
 
     // Optional cleanup (safe)
     text = text.replace(/```json/gi, "").replace(/```/gi, "").trim();
