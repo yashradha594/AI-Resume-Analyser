@@ -3,6 +3,7 @@ const { GoogleGenAI } = require("@google/genai");
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
+
 /**
  * Build a role-specific prompt for resume analysis
  */
@@ -125,14 +126,16 @@ const analyzeResume = async (resumeText, role) => {
   try {
     const prompt = buildAnalysisPrompt(resumeText, role);
 
-    const interaction = await ai.interactions.create({
-      model: "gemini-3.5-flash",
-      input: prompt,
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: prompt,
     });
 
-    let text = interaction.output_text;
+    let text = response.text;
 
-    // clean + parse (keep your existing logic if you want)
+    // Clean up any accidental markdown wrapping
+    text = text.replace(/```json/gi, "").replace(/```/gi, "").trim();
+
     const parsed = JSON.parse(text);
 
     return {
@@ -156,12 +159,12 @@ const matchJobDescription = async (resumeText, jobDescription, role) => {
   try {
     const prompt = buildJobMatchPrompt(resumeText, jobDescription, role);
 
-    const interaction = await ai.interactions.create({
-      model: "gemini-3.5-flash",
-      input: prompt,
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: prompt,
     });
 
-    let text = interaction.output_text;
+    let text = response.text;
 
     // Optional cleanup (safe)
     text = text.replace(/```json/gi, "").replace(/```/gi, "").trim();
