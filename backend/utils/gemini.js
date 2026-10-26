@@ -5,7 +5,14 @@ const ai = new GoogleGenAI({
 });
 
 // Models tried in order if one is overloaded or unavailable
-const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-2.5-pro", "gemini-2.5-flash"];
+// All confirmed available for this API key via models.list()
+const FALLBACK_MODELS = [
+  "gemini-3.8-flash",      // Latest — try first
+  "gemini-3.7-flash",      // One version back
+  "gemini-3.5-flash",      // Stable fallback
+  "gemini-flash-latest",   // Alias — always points to newest available
+  "gemini-3.1-pro-preview" // Pro fallback (slower but reliable)
+];
 
 // Timeout (ms) per model attempt — avoids hanging forever
 const MODEL_TIMEOUT_MS = 25000;
