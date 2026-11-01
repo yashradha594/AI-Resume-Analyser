@@ -48,7 +48,6 @@ const LoginPage = () => {
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'var(--bg-primary)', padding: '24px',
-      backgroundImage: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.18), transparent)',
     }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -154,38 +153,7 @@ const LoginPage = () => {
           </Link>
         </p>
       </motion.div>
-<footer
-  style={{
-    position: 'absolute',
-    bottom: '18px',
-    right: '32px',
-    fontSize: '13px',
-    color: 'var(--text-primary)',
-    opacity: 0.9,
-    letterSpacing: '0.3px',
-  }}
->
-  Made with{" "}
-  <span
-    style={{
-      color: '#3b82f6',
-      textShadow: '0 0 6px rgba(59,130,246,0.6)'
-    }}
-  >
-    💙
-  </span>{" "}
-  by{" "}
-  <span
-    style={{
-      fontWeight: 600,
-      color: '#3b82f6' // 👉 same as heart
-    }}
-  >
-    Y R
-  </span>
-</footer>
 
-      
     </div>
   );
 };

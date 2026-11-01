@@ -5,15 +5,15 @@ const ThemeContext = createContext(null);
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('theme');
-    return stored ? stored === 'dark' : true; // Default: dark
+    return stored ? stored === 'dark' : false; // Default: light
   });
 
   useEffect(() => {
     const root = document.documentElement;
     if (isDark) {
-      root.classList.remove('light');
+      root.classList.add('dark');
     } else {
-      root.classList.add('light');
+      root.classList.remove('dark');
     }
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);

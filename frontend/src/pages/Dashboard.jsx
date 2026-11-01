@@ -25,11 +25,11 @@ const Dashboard = () => {
   ];
 
   const tips = [
-    '📌 Use a text-based PDF (not scanned) for best results',
-    '🎯 Make sure your role is correctly set in Profile for accurate analysis',
-    '📧 Add your email to receive a formatted report after analysis',
-    '💡 Use the Job Matcher to compare your resume with job descriptions',
-    '📥 Download your analysis as a PDF from the Upload page',
+    'Use a text-based PDF (not scanned) for best results',
+    'Make sure your role is correctly set in Profile for accurate analysis',
+    'Add your email to receive a formatted report after analysis',
+    'Use the Job Matcher to compare your resume with job descriptions',
+    'Download your analysis from the Upload page',
   ];
 
   return (
@@ -39,41 +39,33 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         style={{
-          marginBottom: 32, padding: '28px 32px',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))',
-          border: '1px solid rgba(99,102,241,0.25)',
-          borderRadius: 16, position: 'relative', overflow: 'hidden'
+          marginBottom: 32, padding: '24px 32px',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
         }}
       >
-        {/* Background decoration */}
-        <div style={{
-          position: 'absolute', right: -20, top: -20,
-          width: 200, height: 200, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.1), transparent)',
-          pointerEvents: 'none'
-        }} />
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{
-            width: 52, height: 52, borderRadius: 14,
+            width: 44, height: 44, borderRadius: 12,
             background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0
           }}>
-            <Cpu size={24} color="white" />
+            <Cpu size={20} color="white" />
           </div>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
-              Welcome back, {user?.name?.split(' ')[0]}! 👋
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+              Welcome back, {user?.name?.split(' ')[0]}
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-              Your target role:{' '}
+              Target role:{' '}
               <span style={{
-                background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)',
+                background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)',
                 borderRadius: 20, padding: '2px 10px', fontSize: 13,
-                fontWeight: 600, color: '#a5b4fc'
+                fontWeight: 600, color: 'var(--accent-primary)'
               }}>
-                🎯 {role}
+                {role}
               </span>
             </p>
           </div>
@@ -121,11 +113,10 @@ const Dashboard = () => {
             <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Your Target Role</h3>
           </div>
           <div style={{
-            padding: '16px', borderRadius: 12, textAlign: 'center',
-            background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)'
+            padding: '16px', borderRadius: 10, textAlign: 'center',
+            background: 'var(--bg-tertiary)', border: '1px solid var(--border)'
           }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#a5b4fc', marginBottom: 4 }}>{role}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 4 }}>{role}</div>
             <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>AI will tailor analysis for this role</p>
           </div>
           <button onClick={() => navigate('/profile')} className="btn-secondary" style={{ width: '100%', marginTop: 12, justifyContent: 'center', fontSize: 13 }}>
@@ -166,9 +157,9 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
         style={{
-          textAlign: 'center', padding: '32px',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.08))',
-          border: '1px solid rgba(99,102,241,0.2)', borderRadius: 16
+          textAlign: 'center', padding: '28px',
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border)', borderRadius: 12
         }}
       >
         <div style={{ fontSize: 32, marginBottom: 12 }}></div>
@@ -178,8 +169,8 @@ const Dashboard = () => {
         <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20 }}>
           Upload your PDF and get AI-powered insights in under 30 seconds
         </p>
-        <button onClick={() => navigate('/upload')} className="btn-primary glow" style={{ padding: '12px 32px' }}>
-          Upload Resume Now →
+        <button onClick={() => navigate('/upload')} className="btn-primary" style={{ padding: '12px 32px' }}>
+          Upload Resume Now
         </button>
       </motion.div>
     </div>

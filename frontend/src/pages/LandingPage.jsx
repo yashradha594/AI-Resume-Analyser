@@ -16,20 +16,15 @@ const LandingPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', overflow: 'hidden' }}>
-      {/* Background decoration */}
-      <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
-        background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.15), transparent)',
-      }} />
+
 
       {/* Navbar */}
       <nav style={{
         position: 'relative', zIndex: 10,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '20px 40px',
+        padding: '16px 40px',
         borderBottom: '1px solid var(--border)',
-        background: 'rgba(15,23,42,0.8)',
-        backdropFilter: 'blur(20px)',
+        background: 'var(--bg-secondary)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -96,23 +91,20 @@ const LandingPage = () => {
           </p>
 
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               onClick={() => navigate('/signup')}
-              className="btn-primary glow"
+              className="btn-primary"
               style={{ padding: '14px 32px', fontSize: 16, borderRadius: 12 }}
             >
               Analyze My Resume Free <ChevronRight size={18} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.04 }}
+            </button>
+            <button
               onClick={() => navigate('/login')}
               className="btn-secondary"
               style={{ padding: '14px 32px', fontSize: 16, borderRadius: 12 }}
             >
               Sign In
-            </motion.button>
+            </button>
           </div>
         </motion.div>
 
@@ -195,7 +187,7 @@ const LandingPage = () => {
           </p>
           <button
             onClick={() => navigate('/signup')}
-            className="btn-primary glow"
+            className="btn-primary"
             style={{ padding: '14px 40px', fontSize: 16 }}
           >
             Start Analyzing — It's Free

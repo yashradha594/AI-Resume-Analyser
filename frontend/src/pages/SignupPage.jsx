@@ -66,7 +66,6 @@ const SignupPage = () => {
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'var(--bg-primary)', padding: '24px',
-      backgroundImage: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.18), transparent)',
     }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -178,7 +177,7 @@ const SignupPage = () => {
                 className="btn-primary"
                 style={{ flex: 2, justifyContent: 'center' }}
               >
-                {loading ? <><Loader2 size={16} className="animate-spin" /> Creating Account...</> : 'Create Account 🚀'}
+                {loading ? <><Loader2 size={16} className="animate-spin" /> Creating Account...</> : 'Create Account'}
               </button>
             </div>
           </motion.div>
